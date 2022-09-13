@@ -1,9 +1,9 @@
 from django.db import models
 
-from users.models import User
+from common.models import Common
 
 # Create your models here.
-class Room(models.Model):
+class Room(Common):
 
     """Room Model Definition"""
 
@@ -21,12 +21,25 @@ class Room(models.Model):
     address = models.TextField(max_length=200)
     pet_friendly = models.BooleanField(default=True)
     kind = models.CharField(max_length=20, choices=RoomKindChoices.choices)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    amenities = models.ManyToManyField("rooms.Amenity")
 
 
-class Amenity(models.Model):
+class Amenity(Common):
 
     """Amenity Model Definition"""
 
     name = models.CharField(max_length=150)
     description = models.CharField(max_length=150, null=True)
+
+
+""" 
+    Many To One
+    One To Many
+    Many To Many
+
+    [Room1, Room2, Room3] => User1  (Many To One)
+    User1 => [Room1, Room2, Room3]  (One To Many)
+    [Amenity1, Amenity2, Amenity3] => [Room1, Room2, Room3]  (Many To Many)
+    여러 종류의 Amenities를 여러 Rooms가 동시에 가질 수 있다.
+"""
