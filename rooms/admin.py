@@ -15,6 +15,7 @@ class RoomAdmin(admin.ModelAdmin):
         "amenities",
         "created",
         "updated",
+        "category",
     )
 
 
