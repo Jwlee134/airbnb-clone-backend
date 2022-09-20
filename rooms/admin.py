@@ -6,7 +6,15 @@ from rooms.models import Room, Amenity
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ("name", "price", "kind", "owner", "created", "updated")
+    list_display = (
+        "name",
+        "price",
+        "kind",
+        "total_amenities",
+        "owner",
+        "created",
+        "updated",
+    )
     list_filter = (
         "country",
         "city",
@@ -17,6 +25,10 @@ class RoomAdmin(admin.ModelAdmin):
         "updated",
         "category",
     )
+
+    # Django ORM을 이용한 커스텀 list_display 항목 정의
+    def total_amenities(self, room):
+        return room.amenities.count()
 
 
 @admin.register(Amenity)
