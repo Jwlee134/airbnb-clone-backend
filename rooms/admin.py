@@ -26,6 +26,11 @@ class RoomAdmin(admin.ModelAdmin):
         "updated",
         "category",
     )
+    search_fields = (
+        "=owner__username",  # foreign key
+        # "^name",  # startswith
+        # "=price",  # exact
+    )
 
 
 @admin.register(Amenity)
