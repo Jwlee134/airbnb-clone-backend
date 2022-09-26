@@ -58,6 +58,20 @@ class Room(Common):
     def __str__(self):
         return self.name
 
+    # Django ORM을 이용한 커스텀 필드 정의
+    def total_amenities(self):
+        return self.amenities.count()
+
+    def rating_average(self):
+        count = self.reviews.count()
+        if count == 0:
+            return "No Reviews"
+        total = 0
+        # 특정 필드만 select하는 방법
+        for review in self.reviews.all().values("rating"):
+            total += review["rating"]
+        return round(total / count, 2)
+
 
 class Amenity(Common):
 

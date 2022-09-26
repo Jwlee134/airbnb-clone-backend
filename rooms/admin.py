@@ -11,6 +11,7 @@ class RoomAdmin(admin.ModelAdmin):
         "price",
         "kind",
         "total_amenities",
+        "rating_average",
         "owner",
         "created",
         "updated",
@@ -25,10 +26,6 @@ class RoomAdmin(admin.ModelAdmin):
         "updated",
         "category",
     )
-
-    # Django ORM을 이용한 커스텀 list_display 항목 정의
-    def total_amenities(self, room):
-        return room.amenities.count()
 
 
 @admin.register(Amenity)
