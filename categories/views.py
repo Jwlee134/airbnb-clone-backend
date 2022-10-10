@@ -11,11 +11,16 @@ from .serializers import CategorySerializer
 def categories(request):
     if request.method == "GET":
         categories = Category.objects.all()
+        # ORM을 통해 가져온 querySet을 CategorySerializer class에 정의된대로 JSON으로 변환
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
     elif request.method == "POST":
-        print(request.data)
-        return Response({"created": True})
+        # 사용자가 보낸 JSON을 CategorySerializer class에 정의된대로 querySet으로 변환
+        serializer = CategorySerializer(data=request.data)
+        if serializer.is_valid():
+            return Response({"created": True})
+        else:
+            return Response(serializer.errors)
 
 
 # GET /category/1
