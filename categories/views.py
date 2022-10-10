@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from .models import Category
 from .serializers import CategorySerializer
 
@@ -26,8 +27,29 @@ def categories(request):
 
 
 # GET /category/1
-@api_view()
+@api_view(["GET", "PUT"])
 def category(request, pk):
-    category = Category.objects.get(pk=pk)
-    serializer = CategorySerializer(category)
-    return Response(serializer.data)
+    try:
+        category = Category.objects.get(pk=pk)
+    except Category.DoesNotExist:
+        raise NotFound
+
+    if request.method == "GET":
+        # try except는 블록 개념 없음
+        serializer = CategorySerializer(category)
+        return Response(serializer.data)
+    elif request.method == "PUT":
+        serializer = CategorySerializer(
+            category,
+            data=request.data,
+            partial=True,  # 특정 필드만 업데이트를 위해 필수 필드도 옵셔널하게 만들고 싶을 때
+        )
+        if serializer.is_valid():
+            """
+            DB에서 가져온 category와 들어오는 데이터(두 번째 키워드 인자)를 합쳐
+            serialize한다는 것을 알기 때문에(업데이트) create가 아닌 update가 실행된다.
+            """
+            updated_category = serializer.save()
+            return Response(CategorySerializer(updated_category).data)
+        else:
+            return Response(serializer.errors)

@@ -31,3 +31,15 @@ class CategorySerializer(serializers.Serializer):
     # 두 번째 인자로 위에 정의해놓은 키워드 인자들의 validation을 통과한 데이터가 들어온다.
     def create(self, validated_data):
         return Category.objects.create(**validated_data)
+
+    # 두 번째 인자로 DB에서 가져온 원래 데이터가 들어온다.
+    def update(self, instance, validated_data):
+        """
+        원래 데이터의 필드는 새로 들어오는 검증된 데이터의 필드가 있으면 그것으로 교체하고
+        없으면 원래 데이터 필드의 값을 준다. (get은 첫 번째 인자의 이름을 가진 필드를 찾으면
+        그것을 반환하고 없으면 두 번째 인자(default)를 반환한다.)
+        """
+        instance.name = validated_data.get("name", instance.name)
+        instance.kind = validated_data.get("kind", instance.kind)
+        instance.save()
+        return instance
