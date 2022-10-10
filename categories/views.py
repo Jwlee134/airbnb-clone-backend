@@ -18,7 +18,9 @@ def categories(request):
         # 사용자가 보낸 JSON을 CategorySerializer class에 정의된대로 querySet으로 변환
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
-            return Response({"created": True})
+            # save 메소드는 내부적으로 CategorySerializer의 create 메소드를 호출한다.
+            new_category = serializer.save()
+            return Response(CategorySerializer(new_category).data)
         else:
             return Response(serializer.errors)
 
