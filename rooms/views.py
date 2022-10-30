@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from django.db import transaction
 from .models import Amenity, Room
 from categories.models import Category
 from .serializers import AmenitiySerializer, RoomDetailSerializer, RoomListSerializer
@@ -26,17 +27,16 @@ class Rooms(APIView):
                         raise ParseError("The type of category should be Rooms.")
                 except Category.DoesNotExist:
                     raise ParseError("Category does not exist.")
-                # serializer의 create 메소드의 validated_data에 유저가 추가됨
-                room = serializer.save(owner=request.user, category=category)
-                # amenities는 하나가 아니므로 아래처럼 for loop 사용하여 추가
-                amenities = request.data.get("amenities")
-                for amenity_pk in amenities:
-                    try:
-                        amenity = Amenity.objects.get(pk=amenity_pk)
-                        room.amenities.add(amenity)
-                    except Amenity.DoesNotExist:
-                        pass
-                return Response(RoomDetailSerializer(room).data)
+                try:
+                    with transaction.atomic():
+                        room = serializer.save(owner=request.user, category=category)
+                        amenities = request.data.get("amenities")
+                        for amenity_pk in amenities:
+                            amenity = Amenity.objects.get(pk=amenity_pk)
+                            room.amenities.add(amenity)
+                        return Response(RoomDetailSerializer(room).data)
+                except Exception:
+                    raise ParseError("Amenity does not exist.")
             else:
                 return Response(serializer.errors)
         else:
