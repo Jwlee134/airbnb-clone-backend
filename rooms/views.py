@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from .models import Amenity, Room
-from .serializers import AmenitiySerializer, RoomSerializer
+from .serializers import AmenitiySerializer, RoomDetailSerializer, RoomListSerializer
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from rest_framework.status import HTTP_204_NO_CONTENT
@@ -9,10 +9,28 @@ from rest_framework.status import HTTP_204_NO_CONTENT
 class Rooms(APIView):
     def get(self, request):
         rooms = Room.objects.all()
-        serializer = RoomSerializer(rooms, many=True)
+        serializer = RoomListSerializer(rooms, many=True)
         return Response(serializer.data)
 
     def post(self, request):
+        pass
+
+
+class RoomDetail(APIView):
+    def get_object(self, pk):
+        try:
+            return Room.objects.get(pk=pk)
+        except Room.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        room = self.get_object(pk)
+        return Response(RoomDetailSerializer(room).data)
+
+    def put(self, request, pk):
+        pass
+
+    def delete(self, request, pk):
         pass
 
 
