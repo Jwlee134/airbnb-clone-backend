@@ -9,6 +9,5 @@
   "address": "134",
   "pet_friendly": true,
   "kind": "entire_place",
-  "category": { "name": "lalalal", "kind": "rooms" },
-  "amenities": [{ "name": "kfwef", "description": "vwefwe" }]
+  "category": 4
 }
