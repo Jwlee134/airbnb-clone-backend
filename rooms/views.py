@@ -19,15 +19,23 @@ class Rooms(APIView):
             if serializer.is_valid():
                 category_pk = request.data.get("category")
                 if not category_pk:
-                    raise ParseError  # 400
+                    raise ParseError("Category is required.")  # 400
                 try:
                     category = Category.objects.get(pk=category_pk)
                     if category.kind == Category.CategoryKindChoices.EXPERIENCES:
-                        raise ParseError
+                        raise ParseError("The type of category should be Rooms.")
                 except Category.DoesNotExist:
-                    raise ParseError
+                    raise ParseError("Category does not exist.")
                 # serializer의 create 메소드의 validated_data에 유저가 추가됨
                 room = serializer.save(owner=request.user, category=category)
+                # amenities는 하나가 아니므로 아래처럼 for loop 사용하여 추가
+                amenities = request.data.get("amenities")
+                for amenity_pk in amenities:
+                    try:
+                        amenity = Amenity.objects.get(pk=amenity_pk)
+                        room.amenities.add(amenity)
+                    except Amenity.DoesNotExist:
+                        pass
                 return Response(RoomDetailSerializer(room).data)
             else:
                 return Response(serializer.errors)

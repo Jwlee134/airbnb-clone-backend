@@ -9,5 +9,6 @@
   "address": "134",
   "pet_friendly": true,
   "kind": "entire_place",
-  "category": 4
+  "category": 4,
+  "amenities": [1, 2, 3, 4]
 }
