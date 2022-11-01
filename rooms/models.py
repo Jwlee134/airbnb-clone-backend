@@ -65,7 +65,7 @@ class Room(Common):
     def rating_average(self):
         count = self.reviews.count()
         if count == 0:
-            return "No Reviews"
+            return 0
         total = 0
         # 특정 필드만 select하는 방법
         for review in self.reviews.all().values("rating"):
