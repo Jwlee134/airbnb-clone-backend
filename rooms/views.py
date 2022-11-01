@@ -16,7 +16,9 @@ from rest_framework.status import HTTP_204_NO_CONTENT
 class Rooms(APIView):
     def get(self, request):
         rooms = Room.objects.all()
-        serializer = RoomListSerializer(rooms, many=True)
+        serializer = RoomListSerializer(
+            rooms, many=True, context={"user": request.user}
+        )
         return Response(serializer.data)
 
     def post(self, request):
@@ -55,7 +57,8 @@ class RoomDetail(APIView):
 
     def get(self, request, pk):
         room = self.get_object(pk)
-        return Response(RoomDetailSerializer(room).data)
+        serializer = RoomDetailSerializer(room, context={"user": request.user})
+        return Response(serializer.data)
 
     def put(self, request, pk):
         if not request.user.is_authenticated:
