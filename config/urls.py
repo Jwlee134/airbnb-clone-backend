@@ -15,10 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf.urls.static import static
+from django.conf import settings  # settings.py를 연결해주는 proxy
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/rooms/", include("rooms.urls")),
     path("api/v1/experiences/", include("experiences.urls")),
     path("api/v1/categories/", include("categories.urls")),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# MEDIA_URL은 file을 읽을 url, MEDIA_ROOT는 file이 실제로 있는 위치
