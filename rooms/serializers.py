@@ -3,7 +3,7 @@ from .models import Amenity, Room
 from users.serializers import TinyUserSerializer
 from categories.serializers import CategorySerializer
 from rest_framework.serializers import SerializerMethodField
-from reviews.serializers import ReviewSerializer
+from media.serializers import PhotoSerializer
 
 
 class AmenitiySerializer(ModelSerializer):
@@ -15,6 +15,7 @@ class AmenitiySerializer(ModelSerializer):
 class RoomListSerializer(ModelSerializer):
     rating_average = SerializerMethodField()
     is_owner = SerializerMethodField()
+    photos = PhotoSerializer(read_only=True, many=True)
 
     def get_rating_average(self, room):
         return room.rating_average()
@@ -33,15 +34,21 @@ class RoomListSerializer(ModelSerializer):
             "price",
             "is_owner",
             "rating_average",
+            "photos",
         )
 
 
 class RoomDetailSerializer(ModelSerializer):
+    """
+    read_only=True => put, delete 요청 등에서 해당 필드를 넣지 않아도
+    request.data가 valid하게 됨 => 원래 있던 데이터가 들어감
+    """
+
     owner = TinyUserSerializer(read_only=True)
-    amenities = AmenitiySerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
     rating_average = SerializerMethodField()
     is_owner = SerializerMethodField()
+    photos = PhotoSerializer(read_only=True, many=True)
 
     def get_rating_average(self, room):
         return room.rating_average()
@@ -53,3 +60,8 @@ class RoomDetailSerializer(ModelSerializer):
     class Meta:
         model = Room
         fields = "__all__"
+
+
+""" 
+TODO: RoomDetailSerializer에서 get 메소드일때만 amenities exclude하기
+ """
