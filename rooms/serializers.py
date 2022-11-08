@@ -42,7 +42,6 @@ class RoomDetailSerializer(ModelSerializer):
     category = CategorySerializer(read_only=True)
     rating_average = SerializerMethodField()
     is_owner = SerializerMethodField()
-    reviews = ReviewSerializer(many=True, read_only=True)
 
     def get_rating_average(self, room):
         return room.rating_average()
