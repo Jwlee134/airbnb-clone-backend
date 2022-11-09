@@ -21,8 +21,8 @@ class RoomListSerializer(ModelSerializer):
         return room.rating_average()
 
     def get_is_owner(self, room):
-        user = self.context.get("user")
-        return room.owner == user
+        request = self.context["request"]
+        return request.user == room.owner
 
     class Meta:
         model = Room
@@ -54,8 +54,8 @@ class RoomDetailSerializer(ModelSerializer):
         return room.rating_average()
 
     def get_is_owner(self, room):
-        user = self.context.get("user")
-        return room.owner == user
+        request = self.context["request"]
+        return request.user == room.user
 
     class Meta:
         model = Room
