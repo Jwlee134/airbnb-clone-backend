@@ -14,6 +14,9 @@ from reviews.serializers import ReviewSerializer
 from django.conf import settings
 from media.serializers import PhotoSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from bookings.models import Booking
+from bookings.serializers import PublicBookingSerializer
+from django.utils import timezone
 
 
 class Rooms(APIView):
@@ -224,3 +227,25 @@ class RoomPhotos(APIView):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class RoomBookings(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_object(self, pk):
+        try:
+            return Room.objects.get(pk=pk)
+        except Room.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        room = self.get_object(pk)
+        now = timezone.localtime(timezone.now()).date()
+
+        bookings = Booking.objects.filter(
+            room=room,
+            kind=Booking.BookingKindChoices.ROOM,
+            check_out__gte=now,
+        )
+        serializer = PublicBookingSerializer(bookings, many=True)
+        return Response(serializer.data)
