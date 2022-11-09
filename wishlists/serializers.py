@@ -8,4 +8,4 @@ class WishlistSerializer(ModelSerializer):
 
     class Meta:
         model = Wishlist
-        exclude = ("user", "experiences", "updated")
+        fields = ("pk", "rooms", "name")
