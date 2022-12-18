@@ -25,6 +25,7 @@ urlpatterns = [
     path("api/v1/categories/", include("categories.urls")),
     path("api/v1/media/", include("media.urls")),
     path("api/v1/wishlists/", include("wishlists.urls")),
+    path("api/v1/users/", include("users.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # MEDIA_URL은 file을 읽을 url, MEDIA_ROOT는 file이 실제로 있는 위치
