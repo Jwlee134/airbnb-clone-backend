@@ -29,7 +29,9 @@ class CreateRoomBookingSerializer(ModelSerializer):
         if data["check_out"] <= data["check_in"]:
             raise ValidationError("Check in should be eariler than check out.")
         if Booking.objects.filter(
-            check_in__lte=data["check_out"], check_out__gte=data["check_in"]
+            room=self.context["room"],
+            check_in__lte=data["check_out"],
+            check_out__gte=data["check_in"],
         ).exists():
             raise ValidationError("There is an existing booking.")
         return data
