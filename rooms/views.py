@@ -2,7 +2,12 @@ from rest_framework.views import APIView
 from django.db import transaction
 from .models import Amenity, Room
 from categories.models import Category
-from .serializers import AmenitiySerializer, RoomDetailSerializer, RoomListSerializer
+from .serializers import (
+    AmenitiySerializer,
+    RoomDetailSerializer,
+    RoomListSerializer,
+    PhotoSerializer,
+)
 from rest_framework.response import Response
 from rest_framework.exceptions import (
     NotFound,

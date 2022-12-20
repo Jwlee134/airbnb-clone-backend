@@ -1,5 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from users.serializers import TinyUserSerializer
+from rooms.serializers import ReviewListRoomSerializer
 from .models import Review
 
 
@@ -15,3 +16,11 @@ class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
         fields = ("user", "payload", "rating")
+
+
+class ReviewListSerializer(ModelSerializer):
+    room = ReviewListRoomSerializer()
+
+    class Meta:
+        model = Review
+        fields = ("pk", "room", "created", "payload", "rating")

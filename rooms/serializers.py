@@ -40,6 +40,17 @@ class RoomListSerializer(ModelSerializer):
         )
 
 
+class ReviewListRoomSerializer(ModelSerializer):
+    thumbnail = SerializerMethodField()
+
+    def get_thumbnail(self, room):
+        return room.photos.all()[0].file
+
+    class Meta:
+        model = Room
+        fields = ("pk", "name", "thumbnail")
+
+
 class RoomDetailSerializer(ModelSerializer):
     """
     read_only=True => put, delete 요청 등에서 해당 필드를 넣지 않아도
