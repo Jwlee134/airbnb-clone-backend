@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status, exceptions
 from rest_framework.permissions import IsAuthenticated
 from .serializers import PrivateUserSerializer
+from users.models import User
 
 
 class Me(APIView):
@@ -43,3 +44,27 @@ class Users(APIView):
         user.save()
         serializer = PrivateUserSerializer(user)
         return Response(serializer.data)
+
+
+class PublicUser(APIView):
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise exceptions.NotFound
+        serializer = PrivateUserSerializer(user)
+        return Response(serializer.data)
+
+
+class ChangePassword(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        old_pw = request.data.get("old_password")
+        new_pw = request.data.get("new_password")
+        if (not old_pw or not new_pw) or not user.check_password(old_pw):
+            raise exceptions.ParseError
+        user.set_password(new_pw)
+        user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
