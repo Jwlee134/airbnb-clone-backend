@@ -1,9 +1,12 @@
 from rest_framework.views import APIView
-from .models import Perk
-from .serializers import PerkSerializer
+from .models import Perk, Experience
+from categories.models import Category
+from .serializers import PerkSerializer, ExperienceSerializer
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-from rest_framework.status import HTTP_204_NO_CONTENT
+from rest_framework import status, exceptions
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from common.paginations import PagePagination
+from django.db import transaction
 
 
 class Perks(APIView):
@@ -26,7 +29,7 @@ class PerkDetail(APIView):
         try:
             return Perk.objects.get(pk=pk)
         except Perk.DoesNotExist:
-            raise NotFound
+            raise exceptions.NotFound
 
     def get(self, request, pk):
         serializer = PerkSerializer(self.get_object(pk))
@@ -47,4 +50,55 @@ class PerkDetail(APIView):
     def delete(self, request, pk):
         perk = self.get_object(pk=pk)
         perk.delete()
-        return Response(status=HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class Experiences(APIView, PagePagination):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        experiences = Experience.objects.all()
+        serializer = ExperienceSerializer(
+            self.paginate(request, experiences), many=True
+        )
+        return Response(self.response(serializer.data, experiences.count()))
+
+    def post(self, request):
+        serializer = ExperienceSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        category_pk = request.data.get("category")
+        if not category_pk:
+            raise exceptions.ParseError("Category is required.")
+        category = Category.objects.get(pk=category_pk)
+        if category.kind == Category.CategoryKindChoices.ROOMS:
+            raise exceptions.ParseError("The type of category should not be rooms.")
+        try:
+            with transaction.atomic():
+                experience = serializer.save(host=request.user, category=category)
+                perks = request.data.get("perks")
+                for perk_pk in perks:
+                    perk = Perk.objects.get(pk=perk_pk)
+                    experience.perks.add(perk)
+        except:
+            raise exceptions.ParseError("Perks don't exist.")
+        return Response({"pk": experience.pk})
+
+
+class ExperienceDetail(APIView):
+    def get(self, request, pk):
+        pass
+
+    def put(self, request, pk):
+        pass
+
+    def delete(self, request, pk):
+        pass
+
+
+class ExperienceBookings(APIView):
+    def get(self, request):
+        pass
+
+    def post(self, request):
+        pass
