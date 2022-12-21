@@ -85,7 +85,29 @@ class Experiences(APIView, PagePagination):
         return Response({"pk": experience.pk})
 
 
+class ExperiencePerks(APIView, PagePagination):
+    def get_object(self, pk):
+        try:
+            experience = Experience.objects.get(pk=pk)
+        except Experience.DoesNotExist:
+            raise exceptions.NotFound
+        return experience
+
+    def get(self, request, pk):
+        experience = self.get_object(pk)
+        perks = experience.perks.all()
+        serializer = PerkSerializer(self.paginate(request, perks), many=True)
+        return Response(self.response(serializer.data, perks.count()))
+
+
 class ExperienceDetail(APIView):
+    def get_object(self, pk):
+        try:
+            experience = Experience.objects.get(pk=pk)
+        except Experience.DoesNotExist:
+            raise exceptions.NotFound
+        return experience
+
     def get(self, request, pk):
         pass
 

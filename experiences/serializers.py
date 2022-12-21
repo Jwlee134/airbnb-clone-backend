@@ -12,9 +12,8 @@ class PerkSerializer(ModelSerializer):
 
 class ExperienceSerializer(ModelSerializer):
     host = TinyUserSerializer(read_only=True)
-    perks = PerkSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Experience
-        fields = "__all__"
+        exclude = ("perks", "created", "updated", "description")
