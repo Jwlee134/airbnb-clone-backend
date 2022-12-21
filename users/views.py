@@ -9,6 +9,7 @@ from users.models import User
 from rooms.models import Room
 from reviews.models import Review
 from django.conf import settings
+from django.contrib.auth import authenticate, login, logout
 import math
 
 
@@ -112,4 +113,26 @@ class ChangePassword(APIView):
             raise exceptions.ParseError
         user.set_password(new_pw)
         user.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LogIn(APIView):
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        if not username or not password:
+            raise exceptions.ParseError
+        # If the given credentials are valid, return a User object.
+        user = authenticate(request, username=username, password=password)
+        if not user:
+            raise exceptions.AuthenticationFailed("Wrong username or password.")
+        login(request, user=user)  # Persist a user id and a backend in the request.
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LogOut(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
