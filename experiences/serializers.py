@@ -17,3 +17,12 @@ class ExperienceSerializer(ModelSerializer):
     class Meta:
         model = Experience
         exclude = ("perks", "created", "updated", "description")
+
+
+class ExperienceDetailSerializer(ModelSerializer):
+    host = TinyUserSerializer(read_only=True)
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        model = Experience
+        exclude = ("perks",)

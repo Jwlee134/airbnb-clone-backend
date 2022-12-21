@@ -1,7 +1,11 @@
 from rest_framework.views import APIView
 from .models import Perk, Experience
 from categories.models import Category
-from .serializers import PerkSerializer, ExperienceSerializer
+from .serializers import (
+    PerkSerializer,
+    ExperienceSerializer,
+    ExperienceDetailSerializer,
+)
 from rest_framework.response import Response
 from rest_framework import status, exceptions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -70,9 +74,12 @@ class Experiences(APIView, PagePagination):
         category_pk = request.data.get("category")
         if not category_pk:
             raise exceptions.ParseError("Category is required.")
-        category = Category.objects.get(pk=category_pk)
-        if category.kind == Category.CategoryKindChoices.ROOMS:
-            raise exceptions.ParseError("The type of category should not be rooms.")
+        try:
+            category = Category.objects.get(pk=category_pk)
+            if category.kind == Category.CategoryKindChoices.ROOMS:
+                raise exceptions.ParseError("The type of category should not be rooms.")
+        except Category.DoesNotExist:
+            raise exceptions.ParseError("Category doesn't exist.")
         try:
             with transaction.atomic():
                 experience = serializer.save(host=request.user, category=category)
@@ -80,18 +87,18 @@ class Experiences(APIView, PagePagination):
                 for perk_pk in perks:
                     perk = Perk.objects.get(pk=perk_pk)
                     experience.perks.add(perk)
+                return Response({"pk": experience.pk})
         except:
             raise exceptions.ParseError("Perks don't exist.")
-        return Response({"pk": experience.pk})
 
 
 class ExperiencePerks(APIView, PagePagination):
     def get_object(self, pk):
         try:
             experience = Experience.objects.get(pk=pk)
+            return experience
         except Experience.DoesNotExist:
             raise exceptions.NotFound
-        return experience
 
     def get(self, request, pk):
         experience = self.get_object(pk)
@@ -101,21 +108,60 @@ class ExperiencePerks(APIView, PagePagination):
 
 
 class ExperienceDetail(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get_object(self, pk):
         try:
             experience = Experience.objects.get(pk=pk)
+            return experience
         except Experience.DoesNotExist:
             raise exceptions.NotFound
-        return experience
 
     def get(self, request, pk):
-        pass
+        experience = self.get_object(pk)
+        serializer = ExperienceDetailSerializer(experience)
+        return Response(serializer.data)
 
     def put(self, request, pk):
-        pass
+        experience = self.get_object(pk)
+        if experience.host != request.user:
+            raise exceptions.PermissionDenied
+        serializer = ExperienceDetailSerializer(
+            experience, data=request.data, partial=True
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        category_pk = request.data.get("category")
+        category = experience.category
+        if category_pk:
+            try:
+                category = Category.objects.get(pk=category_pk)
+                if category.kind == Category.CategoryKindChoices.ROOMS:
+                    raise exceptions.ParseError("Category kind should be experiences.")
+            except Category.DoesNotExist:
+                raise exceptions.ParseError("Category doesn't exist.")
+        try:
+            with transaction.atomic():
+                if category_pk:
+                    experience = serializer.save(category=category)
+                else:
+                    experience = serializer.save()
+                perks = request.data.get("perks")
+                if perks:
+                    experience.perks.clear()
+                    for perk_pk in perks:
+                        perk = Perk.objects.get(pk=perk_pk)
+                        experience.perks.add(perk)
+                return Response(status=status.HTTP_204_NO_CONTENT)
+        except:
+            raise exceptions.ParseError("Perk doesn't exist.")
 
     def delete(self, request, pk):
-        pass
+        experience = self.get_object(pk)
+        if experience.host != request.user:
+            raise exceptions.PermissionDenied
+        experience.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ExperienceBookings(APIView):
