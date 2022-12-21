@@ -8,9 +8,8 @@ from reviews.serializers import ReviewListSerializer
 from users.models import User
 from rooms.models import Room
 from reviews.models import Review
-from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
-import math
+from common.paginations import PagePagination
 
 
 class Me(APIView):
@@ -63,43 +62,33 @@ class PublicUser(APIView):
         return Response(serializer.data)
 
 
-class PublicUserRooms(APIView):
+class PublicUserRooms(APIView, PagePagination):
     def get(self, request, username):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             raise exceptions.NotFound
-        try:
-            page = int(request.query_params.get("page", 1))
-        except ValueError:
-            page = 1
-        limit = settings.LIMIT
-        total_page = math.ceil(Room.objects.filter(owner=user).count() / limit)
-        rooms = RoomListSerializer(
-            Room.objects.filter(owner=user)[page * limit - limit : page * limit],
+        rooms = Room.objects.filter(owner=user)
+        serializer = RoomListSerializer(
+            self.paginate(request, rooms),
             many=True,
             context={"request": request},
         )
-        return Response({"total_page": total_page, "data": rooms.data})
+        return Response(self.response(serializer.data, rooms.count()))
 
 
-class PublicUserReviews(APIView):
+class PublicUserReviews(APIView, PagePagination):
     def get(self, request, username):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             raise exceptions.NotFound
-        try:
-            page = int(request.query_params.get("page", 1))
-        except ValueError:
-            page = 1
-        limit = settings.LIMIT
-        total_page = math.ceil(Review.objects.filter(user=user).count() / limit)
-        reviews = ReviewListSerializer(
-            Review.objects.filter(user=user)[page * limit - limit : page * limit],
+        reviews = Review.objects.filter(user=user)
+        serializer = ReviewListSerializer(
+            self.paginate(request, reviews),
             many=True,
         )
-        return Response({"total_page": total_page, "data": reviews.data})
+        return Response(self.response(serializer.data, reviews.count()))
 
 
 class ChangePassword(APIView):

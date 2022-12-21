@@ -6,7 +6,6 @@ from .serializers import (
     AmenitiySerializer,
     RoomDetailSerializer,
     RoomListSerializer,
-    PhotoSerializer,
 )
 from rest_framework.response import Response
 from rest_framework.exceptions import (
@@ -16,7 +15,7 @@ from rest_framework.exceptions import (
 )
 from rest_framework.status import HTTP_204_NO_CONTENT
 from reviews.serializers import ReviewSerializer
-from django.conf import settings
+from common.paginations import PagePagination
 from media.serializers import PhotoSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from bookings.models import Booking
@@ -159,7 +158,7 @@ class AmenityDetail(APIView):
         return Response(status=HTTP_204_NO_CONTENT)
 
 
-class RoomReviews(APIView):
+class RoomReviews(APIView, PagePagination):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_object(self, pk):
@@ -169,16 +168,10 @@ class RoomReviews(APIView):
             raise NotFound
 
     def get(self, request, pk):
-        try:
-            page = int(request.query_params.get("page", 1))
-        except ValueError:
-            page = 1
         room = self.get_object(pk)
-        limit = settings.LIMIT
-        serializer = ReviewSerializer(
-            room.reviews.all()[limit * page - limit : limit * page], many=True
-        )
-        return Response(serializer.data)
+        reviews = room.reviews.all()
+        serializer = ReviewSerializer(self.paginate(request, reviews), many=True)
+        return Response(self.response(serializer.data, reviews.count()))
 
     def post(self, request, pk):
         serializer = ReviewSerializer(data=request.data)
@@ -192,7 +185,7 @@ class RoomReviews(APIView):
         return Response(serializer.data)
 
 
-class RoomAmenities(APIView):
+class RoomAmenities(APIView, PagePagination):
     def get_object(self, pk):
         try:
             return Room.objects.get(pk=pk)
@@ -200,16 +193,10 @@ class RoomAmenities(APIView):
             raise NotFound
 
     def get(self, request, pk):
-        try:
-            page = int(request.query_params.get("page", 1))
-        except ValueError:
-            page = 1
         room = self.get_object(pk)
-        limit = settings.LIMIT
-        serializer = AmenitiySerializer(
-            room.amenities.all()[limit * page - limit : limit * page], many=True
-        )
-        return Response(serializer.data)
+        amenities = room.amenities.all()
+        serializer = AmenitiySerializer(self.paginate(request, amenities), many=True)
+        return Response(self.response(serializer.data, amenities.count()))
 
 
 class RoomPhotos(APIView):
@@ -228,7 +215,7 @@ class RoomPhotos(APIView):
         serializer = PhotoSerializer(data=request.data)
         if serializer.is_valid():
             photo = serializer.save(room=room)
-            serializer = PhotoSerizalizer(photo)
+            serializer = PhotoSerializer(photo)
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
