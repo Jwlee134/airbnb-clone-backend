@@ -43,6 +43,7 @@ class Experience(Common):
         on_delete=models.SET_NULL,
         related_name="experiences",
     )
+    max_guests = models.PositiveIntegerField(default=1)
 
     def __str__(self) -> str:
         return self.name

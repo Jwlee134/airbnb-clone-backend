@@ -1,14 +1,16 @@
 from rest_framework.views import APIView
 from .models import Perk, Experience
+from bookings.models import Booking
 from categories.models import Category
 from .serializers import (
     PerkSerializer,
     ExperienceSerializer,
     ExperienceDetailSerializer,
 )
+from bookings.serializers import CreateExperienceBookingSerializer
 from rest_framework.response import Response
 from rest_framework import status, exceptions
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from common.paginations import PagePagination
 from django.db import transaction
 
@@ -165,8 +167,34 @@ class ExperienceDetail(APIView):
 
 
 class ExperienceBookings(APIView):
-    def get(self, request):
+    def get_object(self, pk):
+        try:
+            experience = Experience.objects.get(pk=pk)
+            return experience
+        except Experience.DoesNotExist:
+            raise exceptions.NotFound
+
+    def post(self, request, pk):
+        experience = self.get_object(pk)
+        serializer = CreateExperienceBookingSerializer(
+            data=request.data, context={"experience": experience}
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        serializer.save(
+            kind=Booking.BookingKindChoices.EXPERIENCE,
+            user=request.user,
+            experience=experience,
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ExperienceBooking(APIView):
+    def get(self, request, pk, booking_pk):
         pass
 
-    def post(self, request):
+    def put(self, request, pk, booking_pk):
+        pass
+
+    def delete(self, request, pk, booking_pk):
         pass
