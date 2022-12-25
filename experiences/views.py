@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from .models import Perk, Experience
 from bookings.models import Booking
+from bookings.serializers import ExperienceBookingSerializer
 from categories.models import Category
 from .serializers import (
     PerkSerializer,
@@ -190,11 +191,41 @@ class ExperienceBookings(APIView):
 
 
 class ExperienceBooking(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_experience(self, pk):
+        try:
+            experience = Experience.objects.get(pk=pk)
+            return experience
+        except Experience.DoesNotExist:
+            raise exceptions.NotFound
+
+    def get_object(self, pk):
+        try:
+            booking = Booking.objects.get(
+                pk=pk, kind=Booking.BookingKindChoices.EXPERIENCE
+            )
+            return booking
+        except Booking.DoesNotExist:
+            raise exceptions.NotFound
+
     def get(self, request, pk, booking_pk):
-        pass
+        booking = self.get_object(booking_pk)
+        serializer = ExperienceBookingSerializer(booking)
+        return Response(serializer.data)
 
     def put(self, request, pk, booking_pk):
-        pass
+        experience = self.get_experience(pk)
+        booking = self.get_object(booking_pk)
+        serializer = CreateExperienceBookingSerializer(
+            booking, data=request.data, context={"experience": experience}, partial=True
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        serializer.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request, pk, booking_pk):
-        pass
+        booking = self.get_object(booking_pk)
+        booking.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

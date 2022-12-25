@@ -105,3 +105,9 @@ class CreateExperienceBookingSerializer(ModelSerializer):
         if count + guests > experience.max_guests:
             raise ValidationError("Too much guests.")
         return data
+
+
+class ExperienceBookingSerializer(ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ("id", "user", "experience", "experience_time", "guests")
