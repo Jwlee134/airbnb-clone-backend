@@ -155,4 +155,13 @@ MEDIA_URL = "user-uploads/"
 
 # For pagination
 
-LIMIT = 2
+LIMIT = 20
+
+# Authentication Strategies
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "config.authentication.TrustMeBroAuthentication",
+    ]
+}
