@@ -10,6 +10,8 @@ from rooms.models import Room
 from reviews.models import Review
 from django.contrib.auth import authenticate, login, logout
 from common.paginations import PagePagination
+import jwt
+from django.conf import settings
 
 
 class Me(APIView):
@@ -125,3 +127,17 @@ class LogOut(APIView):
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class JWTLogin(APIView):
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        if not username or not password:
+            raise exceptions.ParseError
+        # If the given credentials are valid, return a User object.
+        user = authenticate(request, username=username, password=password)
+        if not user:
+            raise exceptions.AuthenticationFailed("Wrong username or password.")
+        token = jwt.encode({"pk": user.pk}, settings.SECRET_KEY, algorithm="HS256")
+        return Response({"token": token})
