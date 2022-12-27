@@ -34,7 +34,7 @@ class Rooms(APIView):
     def post(self, request):
         serializer = RoomDetailSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors)
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
         category_pk = request.data.get("category")
         if not category_pk:
             raise ParseError("Category is required.")  # 400
@@ -44,16 +44,15 @@ class Rooms(APIView):
                 raise ParseError("The type of category should be Rooms.")
         except Category.DoesNotExist:
             raise ParseError("Category does not exist.")
-        try:
-            with transaction.atomic():
-                room = serializer.save(owner=request.user, category=category)
-                amenities = request.data.get("amenities")
-                for amenity_pk in amenities:
-                    amenity = Amenity.objects.get(pk=amenity_pk)
-                    room.amenities.add(amenity)
-                return Response(RoomDetailSerializer(room).data)
-        except Exception:
-            raise ParseError("Amenity does not exist.")
+        with transaction.atomic():
+            room = serializer.save(owner=request.user, category=category)
+            amenities = request.data.get("amenities")
+            for amenity_pk in amenities:
+                amenity = Amenity.objects.get(pk=amenity_pk)
+                room.amenities.add(amenity)
+            return Response(
+                RoomDetailSerializer(room, context={"request": request}).data
+            )
 
 
 class RoomDetail(APIView):

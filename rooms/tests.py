@@ -1,6 +1,8 @@
 from rest_framework.test import APITestCase
 from django.utils.crypto import get_random_string
 from . import models
+from users.models import User
+from categories.models import Category
 
 
 class TestAmenities(APITestCase):
@@ -82,3 +84,57 @@ class TestAmenity(APITestCase):
     def test_delete_amenity(self):
         res = self.client.delete("/api/v1/rooms/amenities/1")
         self.assertEqual(res.status_code, 204, "Status code isn't 204.")
+
+
+class TestRooms(APITestCase):
+    URL = "/api/v1/rooms/"
+    room_data = {
+        "name": "Test Room",
+        "country": "한국",
+        "city": "서울",
+        "price": 1,
+        "rooms": 1,
+        "toilets": 1,
+        "description": "Test",
+        "address": "1",
+        "pet_friendly": True,
+        "kind": "entire_place",
+        "amenities": [1],
+    }
+
+    def setUp(self):
+        user = User.objects.create(username="test")
+        user.set_password("123")
+        user.save()
+        self.user = user  # force login 사용 시
+
+    def test_create_room(self):
+        res = self.client.post(self.URL)
+        self.assertEqual(res.status_code, 403, "Status code isn't 403.")
+
+        # self.client.login(username="test",password="123")
+        self.client.force_login(self.user)  # user만 있으면 로그인된다.
+
+        models.Amenity.objects.create(name="Test Amenity", description="Test Desc")
+
+        # body에 Category 프로퍼티 존재 여부 체크
+        res = self.client.post(self.URL, data=self.room_data)
+        self.assertEqual(res.status_code, 400, "Status code isn't 400.")
+
+        # 해당 id를 가진 Category 존재 여부 체크
+        Category.objects.create(name="Test Category", kind="rooms")
+        res = self.client.post(self.URL, data=self.room_data | {"category": 2})
+        self.assertEqual(res.status_code, 400, "Status code isn't 400.")
+
+        # 해당 id를 가진 Amenity 존재 여부 체크
+        res = self.client.post(
+            self.URL, data=self.room_data | {"category": 1, "amenities": [1, 2]}
+        )
+        self.assertEqual(res.status_code, 400, "Status code isn't 400.")
+
+        res = self.client.post(
+            self.URL, data=self.room_data | {"category": 1, "amenities": [1]}
+        )
+        self.assertEqual(res.status_code, 200, "Status code isn't 200.")
+        data = res.json()
+        self.assertEqual(data["name"], self.room_data["name"], "Name doesn't match.")
