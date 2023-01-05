@@ -12,6 +12,7 @@ from django.contrib.auth import authenticate, login, logout
 from common.paginations import PagePagination
 import jwt
 from django.conf import settings
+import requests
 
 
 class Me(APIView):
@@ -141,3 +142,44 @@ class JWTLogin(APIView):
             raise exceptions.AuthenticationFailed("Wrong username or password.")
         token = jwt.encode({"pk": user.pk}, settings.SECRET_KEY, algorithm="HS256")
         return Response({"token": token})
+
+
+class GithubLogin(APIView):
+    def post(self, request):
+        code = request.data.get("code")
+        access_token = (
+            requests.post(
+                f"https://github.com/login/oauth/access_token?code={code}&client_id={settings.GH_CLIENT_ID}&client_secret={settings.GH_CLIENT_SECRET}",
+                headers={"Accept": "application/json"},
+            )
+            .json()
+            .get("access_token")
+        )
+        user_data = requests.get(
+            "https://api.github.com/user",
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Bearer {access_token}",
+            },
+        ).json()
+        emails = requests.get(
+            "https://api.github.com/user/emails",
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Bearer {access_token}",
+            },
+        ).json()
+
+        user, created = User.objects.get_or_create(
+            email=emails[0]["email"],
+            defaults={
+                "username": user_data.get("login"),
+                "name": user_data.get("name"),
+                "avatar": user_data.get("avatar_url"),
+            },
+        )
+        if created:
+            user.set_unusable_password()
+            user.save()
+        login(request, user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
