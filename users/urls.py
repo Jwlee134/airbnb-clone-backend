@@ -14,6 +14,7 @@ urlpatterns = [
     path("token-login", obtain_auth_token),
     path("jwt-login", views.JWTLogin.as_view()),
     path("github", views.GithubLogin.as_view()),
+    path("kakao", views.KakaoLogin.as_view()),
     path("@<str:username>", views.PublicUser.as_view()),
     path("@<str:username>/rooms", views.PublicUserRooms.as_view()),
     path("@<str:username>/reviews", views.PublicUserReviews.as_view()),

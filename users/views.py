@@ -183,3 +183,46 @@ class GithubLogin(APIView):
             user.save()
         login(request, user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class KakaoLogin(APIView):
+    def post(self, request):
+        code = request.data.get("code")
+        access_token = (
+            requests.post(
+                "https://kauth.kakao.com/oauth/token",
+                headers={
+                    "Content-type": "application/x-www-form-urlencoded;charset=utf-8"
+                },
+                data={
+                    "grant_type": "authorization_code",
+                    "client_id": settings.KK_CLIENT_ID,
+                    "redirect_uri": "http://127.0.0.1:3000/social/kakao",
+                    "code": code,
+                },
+            )
+            .json()
+            .get("access_token")
+        )
+        user_data = requests.get(
+            "https://kapi.kakao.com/v2/user/me",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
+            },
+        ).json()
+        kakao_account = user_data.get("kakao_account")
+        profile = kakao_account.get("profile")
+        user, created = User.objects.get_or_create(
+            email=kakao_account.get("email"),
+            defaults={
+                "username": profile.get("nickname"),
+                "name": profile.get("nickname"),
+                "avatar": profile.get("thumbnail_image_url"),
+            },
+        )
+        if created:
+            user.set_unusable_password()
+            user.save()
+        login(request, user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
