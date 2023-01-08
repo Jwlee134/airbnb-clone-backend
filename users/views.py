@@ -117,8 +117,33 @@ class LogIn(APIView):
         # If the given credentials are valid, return a User object.
         user = authenticate(request, username=username, password=password)
         if not user:
-            raise exceptions.AuthenticationFailed("Wrong username or password.")
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST, data="Wrong username or password."
+            )
         login(request, user=user)  # Persist a user id and a backend in the request.
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SignUp(APIView):
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        name = request.data.get("name")
+        email = request.data.get("email")
+        if not username or not password or not name or not email:
+            raise exceptions.ParseError
+        if User.objects.filter(email=email).exists():
+            return Response(
+                status=status.HTTP_409_CONFLICT, data="This email is already in use."
+            )
+        if User.objects.filter(username=username).exists():
+            return Response(
+                status=status.HTTP_409_CONFLICT, data="This username is already in use."
+            )
+        user = User.objects.create(name=name, username=username, email=email)
+        user.set_password(password)
+        user.save()
+        login(request, user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
