@@ -10,7 +10,7 @@ from media.serializers import PhotoSerializer
 class AmenitiySerializer(ModelSerializer):
     class Meta:
         model = Amenity
-        fields = ("name", "description")
+        fields = ("pk", "name", "description")
 
 
 class RoomListSerializer(ModelSerializer):
@@ -29,7 +29,7 @@ class RoomListSerializer(ModelSerializer):
     class Meta:
         model = Room
         fields = (
-            "pk",
+            "id",
             "name",
             "country",
             "city",

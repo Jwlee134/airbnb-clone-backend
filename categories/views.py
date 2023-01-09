@@ -11,6 +11,11 @@ from rest_framework.viewsets import ModelViewSet
 # Create your views here.
 
 
-class CategoryViewSet(ModelViewSet):
+class RoomCategoryViewSet(ModelViewSet):
     serializer_class = CategorySerializer
-    queryset = Category.objects.all()
+    queryset = Category.objects.filter(kind=Category.CategoryKindChoices.ROOMS)
+
+
+class ExperienceCategoryViewSet(ModelViewSet):
+    serializer_class = CategorySerializer
+    queryset = Category.objects.filter(kind=Category.CategoryKindChoices.EXPERIENCES)
