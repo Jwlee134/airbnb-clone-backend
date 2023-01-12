@@ -255,3 +255,24 @@ class RoomBookings(APIView):
         )
         serializer = PublicBookingSerializer(booking)
         return Response(serializer.data)
+
+
+class RoomBookingCheck(APIView):
+    def get_object(self, pk):
+        try:
+            return Room.objects.get(pk=pk)
+        except Room.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        room = self.get_object(pk)
+        check_out = request.query_params.get("check_out")
+        check_in = request.query_params.get("check_in")
+        print(check_in, check_out)
+        if Booking.objects.filter(
+            room=room,
+            check_in__lte=check_out,
+            check_out__gte=check_in,
+        ).exists():
+            return Response({"ok": False})
+        return Response({"ok": True})
